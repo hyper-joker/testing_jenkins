@@ -1,0 +1,64 @@
+/*
+** EPITECH PROJECT, 2022
+** user_pass.c
+** File description:
+** user_pass.c
+*/
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "../../include/server.h"
+#include "../../include/response_messages.h"
+
+void user_name_authentification(const struct sockaddr_in *client_address,
+                                int client_socket,
+                                const char *client_ip, srv_s *srv)
+{
+    char *command_user = strtok(NULL, " ");
+    if (srv->is_connected == 1) {
+        send_at_recv(client_address, client_socket, client_ip,
+                        "069 Already Logged in.\r\n");
+        return;
+    }
+    if (command_user == NULL)
+        command_user = "Anonymous";
+    if (strcmp(command_user, "Anonymous") == 0) {
+        send_at_recv(client_address, client_socket, client_ip,
+                        response_messages[3]);
+        srv->is_connected = 1;
+        srv->Anonymous = command_user;
+        send_at_connection(client_address, client_socket, client_ip,
+                            response_messages[0]);
+    } else {
+        send_at_recv(client_address, client_socket, client_ip,
+                        "069 DENIED no such user.\r\n");
+        srv->is_connected = 0;
+    }
+}
+
+void password_authentification(const struct sockaddr_in *client_address,
+                                int client_socket,
+                                const char *client_ip, srv_s *srv)
+{
+    char *command_pass = strtok(NULL, " ");
+    if (srv->is_connected == 1 && strcmp(srv->Anonymous, "Anonymous") == 0) {
+        send_at_recv(client_address, client_socket, client_ip,
+                        "069 Already Logged in.\r\n");
+        return;
+    } else if (strcmp(command_pass, "123") == 0) {
+        send_at_recv(client_address, client_socket, client_ip,
+                        response_messages[3]);
+        send_at_connection(client_address, client_socket, client_ip,
+                            response_messages[0]);
+        srv->is_connected = 1;
+    } else {
+        send_at_recv(client_address, client_socket, client_ip,
+                        "069 DENIED wrong password.\r\n");
+        srv->is_connected = 0;
+    }
+}
